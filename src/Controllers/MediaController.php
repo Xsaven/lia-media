@@ -19,6 +19,8 @@ class MediaController extends Controller{
 
     public function index(Request $request)
     {
+        //dd(\Route::getRoutes());
+
         return Admin::content(function (Content $content) {
             $content->header('Media');
             $content->description('список');
@@ -86,14 +88,12 @@ class MediaController extends Controller{
 
     protected function form($id=false)
     {
-
-        if(request()->isMethod('GET') && !request()->type) abort(404);
         $type = request()->type ? request()->type : (request()->lia_media ? LiaMedia::find(request()->lia_media)->type : false);
         if(!$type) abort(404);
 
         return Admin::form(LiaMedia::class, function (Form $form) use ($id, $type) {
 
-            if($id) $form->hidden('product_id', $id);
+            if($id) $form->hidden('media_id', $id);
 
             $types = config('lia-media.types');
 
@@ -107,7 +107,7 @@ class MediaController extends Controller{
                 $form->select('relate_id', config('lia-media.relate.name'))->options($relate_all)->rules('required');
             }
 
-            $form = $types[$type]['class']::form($form);
+            $form = $types[$type]['class']::form($form, $id);
 
             foreach(config('lia-media.markers') as $key => $data) {
                 if (isset($data['grid']) && $data['grid']){
