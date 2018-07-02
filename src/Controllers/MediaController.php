@@ -5,7 +5,6 @@ namespace Lia\Media\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Lia\Controllers\ModelForm;
-use Lia\Exception\Handler;
 use Lia\Facades\Admin;
 use Lia\Layout\Content;
 use Lia\Grid;
@@ -38,13 +37,60 @@ class MediaController extends Controller{
         });
     }
 
+    public function create()
+    {
+        return Admin::content(function (Content $content) {
+
+            $descr = 'Create';
+            $title = 'Media';
+            $relate = config('lia-media.relate');
+
+            if(request()->relate_id && $relate['model']){
+                if($r = $relate['model']::find(request()->relate_id))
+                    $descr .= ' for "'.$r->{$relate['title_filed']}.'"';
+            }
+
+            if($relate['model']) $title = $relate['name'].' '.$title;
+
+            $content->header($title);
+            $content->description($descr);
+
+            $content->body($this->form());
+        });
+    }
+
+    public function edit($id)
+    {
+        return Admin::content(function (Content $content) use ($id) {
+
+            $descr = 'Edit';
+            $title = 'Media';
+            $relate = config('lia-media.relate');
+
+            if(request()->relate_id && $relate['model']){
+                if($r = $relate['model']::find(request()->relate_id))
+                    $descr .= ' for "'.$r->{$relate['title_filed']}.'"';
+            }
+
+            if($relate['model']) $title = $relate['name'].' '.$title;
+
+            $content->header($title);
+            $content->description($descr);
+
+            $content->body($this->form($id)->edit($id));
+        });
+    }
+
     protected function grid()
     {
         return Admin::grid(LiaMedia::class, function (Grid $grid) {
 
+            $relate = config('lia-media.relate');
             $tools = [];
             foreach(config('lia-media.types') as $type => $tool){
-                $tools[] = '<a href="'.route('lia_media.create', ['type' => $type]).'" class="btn btn-sm btn-success"><i class="fa fa-'.$tool['icon'].'"></i>&nbsp;&nbsp;New '.$tool['title'].'</a>';
+                $params = ['type' => $type];
+                if($relate['model'] && request()->relate_id) $params['relate_id'] = request()->relate_id;
+                $tools[] = '<a href="'.route('lia_media.create', $params).'" class="btn btn-sm btn-success"><i class="fa fa-'.$tool['icon'].'"></i>&nbsp;&nbsp;New '.$tool['title'].'</a>';
             }
 
             $grid->addTool($tools);
@@ -88,28 +134,6 @@ class MediaController extends Controller{
         });
     }
 
-    public function create()
-    {
-        return Admin::content(function (Content $content) {
-
-            $content->header('Media');
-            $content->description('добавить');
-
-            $content->body($this->form());
-        });
-    }
-
-    public function edit($id)
-    {
-        return Admin::content(function (Content $content) use ($id) {
-
-            $content->header('Media');
-            $content->description('редактировать');
-
-            $content->body($this->form($id)->edit($id));
-        });
-    }
-
     protected function form($id=false)
     {
         $type = request()->type ? request()->type : (request()->lia_media ? LiaMedia::find(request()->lia_media)->type : false);
@@ -128,7 +152,7 @@ class MediaController extends Controller{
             $relate_model = config('lia-media.relate.model');
             if($relate_model) {
                 $relate_all = $relate_model::all()->pluck(config('lia-media.relate.title_filed'), config('lia-media.relate.id_filed'));
-                $form->select('relate_id', config('lia-media.relate.name'))->options($relate_all)->rules('required');
+                $form->select('relate_id', config('lia-media.relate.name'))->options($relate_all)->rules('required')->default(request()->relate_id ? request()->relate_id : 0);
             }
 
             $form = $types[$type]['class']::form($form, $id);
