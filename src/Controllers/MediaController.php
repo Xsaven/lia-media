@@ -19,11 +19,21 @@ class MediaController extends Controller{
 
     public function index(Request $request)
     {
-        //dd(\Route::getRoutes());
-
         return Admin::content(function (Content $content) {
-            $content->header('Media');
-            $content->description('список');
+
+            $descr = 'список';
+            $title = 'Media';
+            $relate = config('lia-media.relate');
+
+            if(request()->relate_id && $relate['model']){
+                if($r = $relate['model']::find(request()->relate_id))
+                    $descr = $r->{$relate['title_filed']};
+            }
+
+            if($relate['model']) $title = $relate['name'].' '.$title;
+
+            $content->header($title);
+            $content->description($descr);
             $content->body($this->grid());
         });
     }
@@ -48,7 +58,10 @@ class MediaController extends Controller{
                 return "<img src='{$src}' width='50px' />";
             });
 
-            $grid->type('Type')->badge();
+            $grid->column('type', 'Type')->display(function($type){
+                return config('lia-media.types.'.$type.'.title');
+            })->badge('blue');
+
             $grid->title('Название')->sortable();
 
             foreach(config('lia-media.markers') as $key => $data) {
@@ -61,6 +74,17 @@ class MediaController extends Controller{
 
             $grid->created_at();
             $grid->updated_at();
+
+            $grid->filter(function($filter){
+                $relate = config('lia-media.relate');
+                if($relate['model'])
+                    $filter->equal('relate_id', $relate['name'])->select($relate['model']::all()->pluck($relate['title_filed'], $relate['id_filed']));
+                $types = [];
+                foreach (config('lia-media.types') as $key => $type)
+                    $types[$key] = $type['title'];
+
+                $filter->equal('type', "Type")->select($types);
+            });
         });
     }
 
