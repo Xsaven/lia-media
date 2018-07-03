@@ -182,8 +182,11 @@ class MediaController extends Controller{
                             return redirect()->route($result['redirect_name'])->with(compact($status));
                         else if(isset($result['redirect']))
                             return redirect($result['redirect'])->with(compact($status));
-                        else
-                            return redirect()->route('lia_media.index', session('relate_id') ? ['relate_id' => session('relate_id')] : [])->with(compact($status));
+                        else {
+                            $r_id = session('relate_id');
+                            if($r_id) session(['relate_id' => null]);
+                            return redirect()->route('lia_media.index', $r_id ? ['relate_id' => $r_id] : [])->with(compact($status));
+                        }
                     }else
                         return back();
                 }else
