@@ -138,6 +138,7 @@ class MediaController extends Controller{
     {
         $type = request()->type ? request()->type : (request()->lia_media ? LiaMedia::find(request()->lia_media)->type : false);
         if(!$type) abort(404);
+        if(request()->relate_id) session(['relate_id' => request()->relate_id]);
 
         return Admin::form(LiaMedia::class, function (Form $form) use ($id, $type) {
 
@@ -182,7 +183,7 @@ class MediaController extends Controller{
                         else if(isset($result['redirect']))
                             return redirect($result['redirect'])->with(compact($status));
                         else
-                            return redirect()->route('lia_media.index')->with(compact($status));
+                            return redirect()->route('lia_media.index', session('relate_id') ? ['relate_id' => session('relate_id')] : [])->with(compact($status));
                     }else
                         return back();
                 }else

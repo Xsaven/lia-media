@@ -20,7 +20,7 @@ class CreateLiaMedia extends Migration
             $table->string('preview')->nullable();
             $table->text('data');
             $table->string('title');
-            $table->text('description');
+            $table->text('description')->nullable();
             foreach(config('lia-media.markers') as $key => $data)
                 $table->{$data[0]}($key)->default(isset($data['form']['default']) ? $data['form']['default'] : NULL);
             $table->integer('active')->default(1);

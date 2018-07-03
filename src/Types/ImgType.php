@@ -12,7 +12,7 @@ class ImgType {
     public static function form(Form $form)
     {
         $form->lfm('data', 'Image')->prev()->rules('required');
-        $form->text('title');
+        $form->text('title')->rules('required');
         $form->ckeditor('description');
 
         return $form;
