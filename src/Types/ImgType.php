@@ -22,7 +22,7 @@ class ImgType {
     {
         $id = $request->lia_media ? $request->lia_media : false;
 
-        $data['preview'] = $data['data'];
+        if(isset($data['data'])) $data['preview'] = $data['data'];
 
         if($id) $result = LiaMedia::find($id)->update($data);
         else $result = LiaMedia::create($data);
